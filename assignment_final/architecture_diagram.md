@@ -12,8 +12,8 @@ flowchart LR
 
   %% COMPUTE LAYER - SERVERLESS TRIAGE
   subgraph Compute["Compute Layer"]
-    AF["Azure Functions (HTTP Trigger)\nMedicationLab Safety Check"]
-    GF["GCP Cloud Functions 2nd Gen / Cloud Run Functions (HTTP Trigger)\nMedicationLab Safety Check"]
+    AF["Azure Functions (HTTP Trigger)\nMedication-Lab Safety Check"]
+    GF["GCP Cloud Functions 2nd Gen / Cloud Run Functions (HTTP Trigger)\nMedication-Lab Safety Check"]
     ETL["Event-Driven ETL\n(Azure Function Blob Trigger OR GCP Eventarc Function)"]
     SCH["Scheduled Summary Job\n(Azure Timer Trigger OR Cloud Scheduler + Function)"]
   end
@@ -22,6 +22,11 @@ flowchart LR
   subgraph Data["Data Layer"]
     AS["Object Storage\n(Azure Blob Storage OR GCP Cloud Storage)\nRaw Requests/Responses + Rules CSV/JSON"]
     SQL["Managed SQL Database\n(Azure SQL OR Cloud SQL)\nresults + flags + summaries"]
+  end
+
+  %% OPTIONAL ANALYTICS/AI
+  subgraph Analytics["Optional Analytics / AI"]
+    NB["Notebook / Analytics\n(Azure ML Notebook OR Vertex AI Workbench)\nTrend summaries + reports"]
   end
 
   %% FLOWS
@@ -38,7 +43,7 @@ flowchart LR
   SCH -->|Daily aggregation| SQL
   NB -->|Query + analysis| SQL
   NB -->|Write reports (CSV)| AS
-  
+
   %% MONITORING (optional label)
   FE -. logs/metrics .-> M[(Monitoring\nApp Insights / Cloud Logging)]
   AF -. logs/metrics .-> M
