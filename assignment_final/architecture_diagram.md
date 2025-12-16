@@ -44,7 +44,6 @@ flowchart LR
   NB -->|Query + analysis| SQL
   NB -->|Write reports (CSV)| AS
 
-  %% MONITORING (optional label)
   FE -. logs/metrics .-> M[(Monitoring\nApp Insights / Cloud Logging)]
   AF -. logs/metrics .-> M
   GF -. logs/metrics .-> M
