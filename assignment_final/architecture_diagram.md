@@ -24,11 +24,6 @@ flowchart LR
     SQL["Managed SQL Database\n(Azure SQL OR Cloud SQL)\nresults + flags + summaries"]
   end
 
-  %% OPTIONAL ANALYTICS/AI
-  subgraph Analytics["Optional Analytics / AI"]
-    NB["Notebook / Analytics\n(Azure ML Notebook OR Vertex AI Workbench)\nTrend summaries + reports"]
-  end
-
   %% FLOWS
   FE -->|Call triage endpoint| AF
   FE -->|Call triage endpoint| GF
@@ -43,7 +38,7 @@ flowchart LR
   SCH -->|Daily aggregation| SQL
   NB -->|Query + analysis| SQL
   NB -->|Write reports (CSV)| AS
-
+  
   %% MONITORING (optional label)
   FE -. logs/metrics .-> M[(Monitoring\nApp Insights / Cloud Logging)]
   AF -. logs/metrics .-> M
