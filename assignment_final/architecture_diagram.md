@@ -1,52 +1,38 @@
-## High-level Architecture Diagram (Multi-Cloud)
-
-```mermaid
 flowchart LR
   %% USERS
-  U[Clinician / Pharmacist / Student] -->|Web UI| FE
+  U["Clinicians / PAs / NPs\nPharmacists / Clinical Staff"] -->|Enter med + lab| FE
 
   %% FRONTEND / ACCESS LAYER
   subgraph Access["Frontend / Access Layer"]
-    FE["Flask Dashboard + API (Container)\n(Azure Container Apps OR GCP Cloud Run)"]
+    FE["Medication Safety Check Dashboard\n(Web Form)"]
+    API["API Endpoint\nPOST /check"]
+    FE --> API
   end
 
-  %% COMPUTE LAYER - SERVERLESS TRIAGE
+  %% COMPUTE LAYER
   subgraph Compute["Compute Layer"]
-    AF["Azure Functions (HTTP Trigger)\nMedication–Lab Safety Check"]
-    GF["GCP Cloud Functions 2nd Gen / Cloud Run Functions (HTTP Trigger)\nMedication–Lab Safety Check"]
-    ETL["Event-Driven ETL\n(Azure Function Blob Trigger OR GCP Eventarc Function)"]
-    SCH["Scheduled Summary Job\n(Azure Timer Trigger OR Cloud Scheduler + Function)"]
+    SF["HTTP Serverless Function\nValidate JSON + Apply Drug–Lab Rule\nReturn: safe / warning + reason"]
+    SCH["Scheduled Job (Serverless / Scheduler)\nDaily Summaries"]
   end
 
   %% DATA LAYER
   subgraph Data["Data Layer"]
-    AS["Object Storage\n(Azure Blob Storage OR GCP Cloud Storage)\nRaw Requests/Responses + Rules CSV/JSON"]
-    SQL["Managed SQL Database\n(Azure SQL OR Cloud SQL)\nresults + flags + summaries"]
+    OS["Cloud Object Storage\nRaw request/response JSON\n+ Rules CSV (versioned)"]
+    DB["Managed SQL Database\nresults + flags + summaries"]
   end
 
-  %% OPTIONAL ANALYTICS/AI
-  subgraph Analytics["Optional Analytics / AI"]
-    NB["Notebook / Analytics\n(Azure ML Notebook OR Vertex AI Workbench)\nTrend summaries + reports"]
-  end
+  %% FLOW
+  API -->|JSON request:\n drug, lab_name, lab_value, unit| SF
+  SF -->|JSON response:\n status + reason| API
 
-  %% FLOWS
-  FE -->|Call triage endpoint| AF
-  FE -->|Call triage endpoint| GF
+  %% TRACEABILITY + PERSISTENCE
+  SF -->|Store raw request/response| OS
+  OS -->|Rules CSV read| SF
 
-  AF -->|Return JSON status| FE
-  GF -->|Return JSON status| FE
+  SF -->|Write structured result\n(drug, lab, value, status, timestamp)| DB
+  SCH -->|Compute daily summaries| DB
 
-  FE -->|Write raw request/response| AS
-  AS -->|New object triggers| ETL
-  ETL -->|Insert structured rows| SQL
+  FE -->|Query warnings + summaries| DB
 
-  SCH -->|Daily aggregation| SQL
-  NB -->|Query + analysis| SQL
-  NB -->|Write reports (CSV)| AS
-
-  %% MONITORING (optional label)
-  FE -. logs/metrics .-> M[(Monitoring\nApp Insights / Cloud Logging)]
-  AF -. logs/metrics .-> M
-  GF -. logs/metrics .-> M
-  ETL -. logs/metrics .-> M
-  SCH -. logs/metrics .-> M
+  NB -->|Query| DB
+  NB -->|Write reports (CSV)| OS
